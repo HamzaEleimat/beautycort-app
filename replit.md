@@ -94,3 +94,4 @@ Changelog:
 - June 29, 2025: Created comprehensive functional requirements document with gap analysis identifying missing domain specifications
 - June 29, 2025: Created comprehensive business logic specification mapping all FR-IDs to detailed workflows, state machines, and validation rules
 - June 29, 2025: Updated functional requirements and business logic with specific business rules: 60min booking notice, 3hr free cancellation, JOD rounded up to whole numbers, 18+ age requirement, unlimited advance booking
+- June 29, 2025: Refined business logic document to align with all functional requirements updates including file size limits, offline functionality, infinite scroll, and penalty systems

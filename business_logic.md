@@ -181,8 +181,25 @@ Search Flow with Filtering:
    - "Tomorrow": Any available slots for next calendar day
    - "This week": Any availability in next 7 days
 
-**Search Ranking Algorithm:**
+**Search Ranking Algorithm with Infinite Scroll:**
 ```
+// Infinite scroll implementation
+function loadSearchResults(query, offset = 0, limit = 20) {
+    const results = performSearch(query, offset, limit);
+    
+    // Calculate scores for ranking
+    const rankedResults = results.map(provider => ({
+        ...provider,
+        score: calculateProviderScore(provider, query.userLocation)
+    })).sort((a, b) => b.score - a.score);
+    
+    return {
+        results: rankedResults,
+        hasMore: results.length === limit,
+        nextOffset: offset + limit
+    };
+}
+
 Score = (Distance_Score × 0.3) + (Rating_Score × 0.25) + 
         (Availability_Score × 0.25) + (Verification_Score × 0.2)
 
@@ -196,28 +213,39 @@ Where:
 ### B.2 Multi-Criteria Filtering Logic
 **Referenced FR-IDs:** FR-FILTER-001 to FR-FILTER-007
 
-**Filter Application Order:**
+**Filter Application Order (Infinite Scroll Compatible):**
 1. **Category Filter (FR-FILTER-001):** Primary filter, reduces result set by ~70%
 2. **Location/Distance (FR-SEARCH-002):** Geographic constraint
-3. **Price Range (FR-FILTER-003):** Min/max JOD filtering
+3. **Price Range (FR-FILTER-003):** Min/max JOD filtering (rounded up to whole numbers)
 4. **Rating Filter (FR-FILTER-004):** Star rating threshold
-5. **Availability (FR-FILTER-005):** Real-time slot checking
+5. **Availability (FR-FILTER-005):** Real-time slot checking (60min minimum notice)
 6. **Service Type (FR-FILTER-002):** Specific service matching
 7. **Gender Preference (FR-FILTER-006):** Provider gender/mixed services
+8. **Age Verification (18+):** Applied to all service bookings
 
 **Derived Rules:**
 ```javascript
-// Price filtering logic
+// Price filtering logic - Updated for round up to whole JOD
 if (servicePrice >= filterMinPrice && servicePrice <= filterMaxPrice) {
-    // Round to nearest 0.05 JOD for display
-    displayPrice = Math.round(servicePrice * 20) / 20;
+    // Round UP to whole JOD for display
+    displayPrice = Math.ceil(servicePrice);
     includeInResults = true;
 }
 
-// Rating calculation
-providerRating = totalRatingPoints / totalReviews;
+// Rating calculation with provider cancellation penalty tracking
+providerRating = (totalRatingPoints - cancellationPenalties * 0.1) / totalReviews;
 if (providerRating >= filterMinRating && totalReviews >= 3) {
     includeInResults = true;
+}
+
+// Age verification for all bookings
+function validateBookingAge(customerId) {
+    const customer = getCustomer(customerId);
+    const age = calculateAge(customer.dateOfBirth);
+    if (age < 18) {
+        throw new ValidationError('Minimum age requirement: 18+ for all services');
+    }
+    return true;
 }
 ```
 
@@ -490,7 +518,9 @@ const messageTypes = {
 // Message retention policy - Updated per requirements
 const retentionRules = {
     allMessages: '1 year from creation', // Standard retention period
-    userDataDeletion: 'Delete when user account deleted'
+    userDataDeletion: 'Delete when user account deleted',
+    bookingHistory: 'permanent', // Booking history retained permanently
+    automaticCleanup: true // Auto-delete expired messages
 };
 ```
 
@@ -562,7 +592,7 @@ Calendar Operations:
 ```javascript
 function validateSlotCreation(providerId, startTime, endTime, serviceId) {
     const service = getService(serviceId);
-    const duration = service.duration; // in minutes - provider defined
+    const duration = service.duration; // in minutes - provider defined freely
     const bufferTime = service.bufferTime || 0; // Provider-defined buffer time
     
     // Check for overlapping bookings
@@ -571,15 +601,26 @@ function validateSlotCreation(providerId, startTime, endTime, serviceId) {
         throw new ConflictError('Overlapping bookings detected');
     }
     
-    // Validate business hours
+    // Validate business hours (provider-configurable, editable via dashboard)
     if (!isWithinBusinessHours(providerId, startTime, endTime)) {
         throw new ValidationError('Outside business hours');
     }
     
-    // Check service duration alignment
+    // Check for national holidays (auto-blocked unless provider overrides)
+    if (isNationalHoliday(startTime) && !provider.holidayOverride) {
+        throw new ValidationError('Slot blocked for national holiday');
+    }
+    
+    // Check service duration alignment (unlimited services per appointment allowed)
     const slotDuration = (endTime - startTime) / (1000 * 60);
     if (slotDuration !== duration) {
         throw new ValidationError('Slot duration must match service duration');
+    }
+    
+    // Validate 60-minute minimum booking notice
+    const now = new Date();
+    if ((startTime - now) < (60 * 60 * 1000)) {
+        throw new ValidationError('Minimum 60-minute booking notice required');
     }
     
     return true;
@@ -773,12 +814,18 @@ async function checkLicenseExpiration() {
     }
 }
 
-// Age verification for all services
+// Age verification for all services (18+ requirement)
 function validateCustomerAge(customerId, serviceId) {
     const customer = getCustomer(customerId);
     const birthDate = new Date(customer.dateOfBirth);
     const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
+    
+    // Accurate age calculation accounting for birth month/day
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
     
     if (age < 18) {
         throw new ValidationError('Minimum age requirement: 18+ for all services');
