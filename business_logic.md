@@ -439,33 +439,46 @@ const tierBenefits = {
 };
 ```
 
-### D.2 Commission Calculation
+### D.2 Per-Service Fee Calculation
 **Referenced FR-IDs:** FR-FEE-001, FR-FEE-002, FR-FEE-005
 
 ```javascript
-function calculateCommission(booking) {
-    const serviceAmount = booking.service.price;
+function calculateBeautyCortFee(booking) {
+    let totalServiceAmount = 0;
+    let totalBeautyCortFee = 0;
+    let feeBreakdown = [];
     
-    // Base BeautyCort fee
-    let beautyCortFee;
-    if (serviceAmount < 25.00) {
-        beautyCortFee = 2.00; // Fixed 2 JOD
-    } else {
-        beautyCortFee = 5.00; // Fixed 5 JOD
-    }
+    // Calculate fee per service individually
+    booking.services.forEach(service => {
+        const servicePrice = service.price;
+        const percentageFee = servicePrice * 0.05; // 5% per service
+        const fixedFee = 0.25; // 0.25 JOD per service (not per booking)
+        const serviceFee = percentageFee + fixedFee;
+        
+        totalServiceAmount += servicePrice;
+        totalBeautyCortFee += serviceFee;
+        
+        feeBreakdown.push({
+            serviceName: service.name,
+            servicePrice: servicePrice,
+            serviceFee: serviceFee,
+            breakdown: `${servicePrice} × 5% + 0.25 JOD = ${serviceFee.toFixed(2)} JOD`
+        });
+    });
     
-    // Provider tier retention
+    // Provider tier-based retention (applied to total fee)
     const providerTier = booking.provider.currentTier;
     const retentionRate = tierBenefits[providerTier].feeRetention;
-    const providerRetention = beautyCortFee * retentionRate;
+    const providerRetention = totalBeautyCortFee * retentionRate;
     
     // Final amounts (rounded UP to nearest whole JOD)
-    const netBeautyCortFee = roundUpToWhole(beautyCortFee - providerRetention);
-    const providerPayout = roundUpToWhole(serviceAmount - netBeautyCortFee);
+    const netBeautyCortFee = roundUpToWhole(totalBeautyCortFee - providerRetention);
+    const providerPayout = roundUpToWhole(totalServiceAmount - netBeautyCortFee);
     
     return {
-        serviceAmount: serviceAmount,
-        beautyCortFee: beautyCortFee,
+        totalServiceAmount: totalServiceAmount,
+        totalBeautyCortFee: totalBeautyCortFee,
+        feeBreakdown: feeBreakdown, // Per-service fee transparency
         providerRetention: providerRetention,
         netBeautyCortFee: netBeautyCortFee,
         providerPayout: providerPayout

@@ -51,7 +51,7 @@ The following domain-specific requirements need clarification for complete MVP s
 - **FR-AUTH-007**: System shall require terms of service and privacy policy acceptance
 
 #### 1.2 Provider Registration & Verification
-- **FR-PROV-001**: System shall require MoH license upload during provider registration
+- **FR-PROV-001**: System shall require MoH license upload for aesthetic clinic providers only
 - **FR-PROV-002**: System shall implement OCR verification for license documents
 - **FR-PROV-003**: System shall assign verified practitioner badges upon successful verification
 - **FR-PROV-004**: System shall support provider profile creation with business details
@@ -80,7 +80,7 @@ The following domain-specific requirements need clarification for complete MVP s
 - **FR-FILTER-003**: System shall implement price range filtering (min/max JOD)
 - **FR-FILTER-004**: System shall support rating filter (4+ stars, 3+ stars, etc.)
 - **FR-FILTER-005**: System shall filter by availability (today, tomorrow, this week)
-- **FR-FILTER-006**: System shall support gender-specific service filtering
+- **FR-FILTER-006**: System shall support gender-specific service filtering (Male staff, Female staff, Mixed staff, Ladies only)
 - **FR-FILTER-007**: System shall allow sorting by (distance, price, rating, availability)
 
 #### 2.3 Search Results & Display
@@ -152,13 +152,13 @@ The following domain-specific requirements need clarification for complete MVP s
 - **FR-PAY-006**: System shall support payment retry for failed transactions
 
 #### 5.2 Fee Structure & Commission
-- **FR-FEE-001**: System shall charge 2 JOD fee for bookings <25 JOD
-- **FR-FEE-002**: System shall charge 5 JOD fee for bookings ≥25 JOD
+- **FR-FEE-001**: System shall charge 5% + 0.25 JOD fee per service (not per booking)
+- **FR-FEE-002**: System shall calculate fees separately for each service in multi-service bookings
 - **FR-FEE-003**: System shall implement tiered provider fee retention system:
   - Silver (0-999 bookings/month): Keep 10% of BeautyCort fee
   - Gold (1000-1500 bookings/month): Keep 12% of BeautyCort fee  
   - Diamond (1500+ bookings/month): Keep 15% of BeautyCort fee
-- **FR-FEE-004**: System shall calculate and display all fees transparently
+- **FR-FEE-004**: System shall display per-service fee breakdown transparently (e.g., "Service 1: 20 JOD × 5% + 0.25 JOD = 1.25 JOD fee")
 - **FR-FEE-005**: System shall handle T+2 settlement to providers
 
 #### 5.3 Financial Management
@@ -291,8 +291,8 @@ The following domain-specific requirements need clarification for complete MVP s
 - **FR-PAYSEC-005**: System shall log all payment transactions for audit
 
 ### 11.3 Healthcare Compliance
-- **FR-HEALTH-001**: System shall verify MoH licenses through official channels
-- **FR-HEALTH-002**: System shall maintain provider credential databases
+- **FR-HEALTH-001**: System shall verify MoH licenses for aesthetic clinics through official channels
+- **FR-HEALTH-002**: System shall maintain aesthetic clinic credential databases
 - **FR-HEALTH-003**: System shall flag expired or invalid licenses automatically
 - **FR-HEALTH-004**: System shall support health data privacy for aesthetic treatments
 - **FR-HEALTH-005**: System shall implement age verification for restricted services
