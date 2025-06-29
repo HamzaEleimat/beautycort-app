@@ -91,7 +91,7 @@ Customer Registration Flow:
 - **OAuth failure:** Fallback to email registration with error message
 - **Terms rejection:** Block account creation, show explanation
 
-### A.2 Provider Verification Workflow
+### A.2 Provider Verification Workflow (Aesthetic Clinics Only)
 **Referenced FR-IDs:** FR-PROV-001, FR-PROV-002, FR-PROV-003, FR-PROV-004, FR-HEALTH-001
 
 ```
@@ -113,7 +113,9 @@ Provider Verification State Machine:
 ```
 
 **Derived Rules:**
-1. **MoH License Upload (FR-PROV-001, FR-HEALTH-001):**
+1. **MoH License Upload (FR-PROV-001, FR-HEALTH-001) - Aesthetic Clinics Only:**
+   - **Scope:** Required only for aesthetic clinics performing health-related procedures
+   - **Salon Exception:** Salons providing beauty services (hair, nails, etc.) do not require MoH licenses
    - Accepted formats: PDF, JPG, PNG (max 10MB per file - updated requirement)
    - OCR extraction of license number, expiry date, provider name
    - Cross-verification with MoH database (simulated API call)
@@ -222,7 +224,7 @@ Where:
 4. **Rating Filter (FR-FILTER-004):** Star rating threshold
 5. **Availability (FR-FILTER-005):** Real-time slot checking (60min minimum notice)
 6. **Service Type (FR-FILTER-002):** Specific service matching
-7. **Gender Preference (FR-FILTER-006):** Provider gender/mixed services
+7. **Gender Preference (FR-FILTER-006):** Provider gender/mixed services/"Ladies only"
 8. **Age Verification (18+):** Applied to all service bookings
 
 **Derived Rules:**
@@ -787,18 +789,19 @@ class DataProtectionService {
 }
 ```
 
-### H.2 Healthcare Compliance & Age Verification
+### H.2 Healthcare Compliance & Age Verification (Aesthetic Clinics)
 **Referenced FR-IDs:** FR-HEALTH-001 to FR-HEALTH-005
 
-**License Monitoring System:**
+**License Monitoring System (Aesthetic Clinics Only):**
 ```javascript
-// Automated license expiration checking
+// Automated license expiration checking for aesthetic clinics only
 async function checkLicenseExpiration() {
     const expiringLicenses = await db.providers.find({
         'license.expiryDate': {
             $lte: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)) // 30 days
         },
-        status: 'VERIFIED'
+        status: 'VERIFIED',
+        providerType: 'AESTHETIC_CLINIC' // Only check aesthetic clinics
     });
     
     for (const provider of expiringLicenses) {
