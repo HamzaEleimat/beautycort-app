@@ -152,13 +152,13 @@ The following domain-specific requirements need clarification for complete MVP s
 - **FR-PAY-006**: System shall support payment retry for failed transactions
 
 #### 5.2 Fee Structure & Commission
-- **FR-FEE-001**: System shall charge 5% + 0.25 JOD fee per service (not per booking)
+- **FR-FEE-001**: System shall charge 2 JOD flat fee per service <25 JOD, 5 JOD flat fee per service ≥25 JOD
 - **FR-FEE-002**: System shall calculate fees separately for each service in multi-service bookings
 - **FR-FEE-003**: System shall implement tiered provider fee retention system:
   - Silver (0-999 bookings/month): Keep 10% of BeautyCort fee
   - Gold (1000-1500 bookings/month): Keep 12% of BeautyCort fee  
   - Diamond (1500+ bookings/month): Keep 15% of BeautyCort fee
-- **FR-FEE-004**: System shall display per-service fee breakdown transparently (e.g., "Service 1: 20 JOD × 5% + 0.25 JOD = 1.25 JOD fee")
+- **FR-FEE-004**: System shall display per-service fee breakdown transparently (e.g., "Service 1: 20 JOD → 2 JOD fee", "Service 2: 30 JOD → 5 JOD fee")
 - **FR-FEE-005**: System shall handle T+2 settlement to providers
 
 #### 5.3 Financial Management

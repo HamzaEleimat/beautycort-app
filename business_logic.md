@@ -439,7 +439,7 @@ const tierBenefits = {
 };
 ```
 
-### D.2 Per-Service Fee Calculation
+### D.2 Per-Service Flat Fee Calculation
 **Referenced FR-IDs:** FR-FEE-001, FR-FEE-002, FR-FEE-005
 
 ```javascript
@@ -448,12 +448,17 @@ function calculateBeautyCortFee(booking) {
     let totalBeautyCortFee = 0;
     let feeBreakdown = [];
     
-    // Calculate fee per service individually
+    // Calculate flat fee per service individually
     booking.services.forEach(service => {
         const servicePrice = service.price;
-        const percentageFee = servicePrice * 0.05; // 5% per service
-        const fixedFee = 0.25; // 0.25 JOD per service (not per booking)
-        const serviceFee = percentageFee + fixedFee;
+        let serviceFee;
+        
+        // Flat fee structure per service
+        if (servicePrice < 25.00) {
+            serviceFee = 2.00; // 2 JOD for services under 25 JOD
+        } else {
+            serviceFee = 5.00; // 5 JOD for services 25 JOD and above
+        }
         
         totalServiceAmount += servicePrice;
         totalBeautyCortFee += serviceFee;
@@ -462,7 +467,7 @@ function calculateBeautyCortFee(booking) {
             serviceName: service.name,
             servicePrice: servicePrice,
             serviceFee: serviceFee,
-            breakdown: `${servicePrice} × 5% + 0.25 JOD = ${serviceFee.toFixed(2)} JOD`
+            breakdown: `${servicePrice} JOD → ${serviceFee} JOD fee`
         });
     });
     

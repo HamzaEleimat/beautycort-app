@@ -96,3 +96,4 @@ Changelog:
 - June 29, 2025: Updated functional requirements and business logic with specific business rules: 60min booking notice, 3hr free cancellation, JOD rounded up to whole numbers, 18+ age requirement, unlimited advance booking
 - June 29, 2025: Refined business logic document to align with all functional requirements updates including file size limits, offline functionality, infinite scroll, and penalty systems
 - June 29, 2025: Updated MoH license requirement to apply only to aesthetic clinics (not salons), added "ladies only" staff filter for cultural norms, modified fee structure to calculate per service rather than per booking
+- June 29, 2025: Updated fee structure to flat fees: 2 JOD per service <25 JOD, 5 JOD per service ≥25 JOD (applied per service independently)
