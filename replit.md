@@ -42,8 +42,8 @@ BeautyCort is a mobile-first marketplace for booking beauty, spa, and aesthetic-
 ### Booking Engine
 - Real-time slot availability system
 - <10 second confirmation target
-- Optional 2 JOD deposit system to reduce no-shows
 - Hot Slots flash deals for last-minute appointments (<4 hours)
+- Automated reminder system to reduce no-shows
 
 ### Trust & Verification System
 - Mandatory MoH license upload with OCR verification
@@ -62,7 +62,7 @@ BeautyCort is a mobile-first marketplace for booking beauty, spa, and aesthetic-
 
 1. **User Registration**: Email/Google OAuth → OTP verification → Profile creation
 2. **Search Process**: Location selection → Category filtering → Provider discovery
-3. **Booking Flow**: Provider selection → Service choice → Time slot selection → Payment/deposit → Instant confirmation
+3. **Booking Flow**: Provider selection → Service choice → Time slot selection → Payment → Instant confirmation
 4. **Communication**: In-app chat system for provider-customer interaction
 5. **Verification**: Provider license upload → OCR processing → Badge assignment
 
@@ -89,4 +89,5 @@ Preferred communication style: Simple, everyday language.
 ## Changelog
 
 Changelog:
-- June 29, 2025. Initial setup
+- June 29, 2025: Initial setup
+- June 29, 2025: Removed deposit functionality per user request - no deposits will be collected from customers

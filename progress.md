@@ -49,7 +49,7 @@ This document tracks the development progress of the BeautyCort beauty booking p
 
 - [ ] Real-time slot availability
 - [ ] One-tap booking functionality
-- [ ] Cash-on-arrival deposit option
+
 - [ ] Stripe card payment integration
 - [ ] Tap Payments integration (Apple Pay, JoPACC)
 - [ ] Booking confirmation system
@@ -100,7 +100,7 @@ This document tracks the development progress of the BeautyCort beauty booking p
 ## 💰 Payment & Financial
 
 - [ ] Secure payment processing
-- [ ] Deposit handling system
+
 - [ ] Refund processing
 - [ ] Provider payout system (T+2 settlement)
 - [ ] Fee calculation engine

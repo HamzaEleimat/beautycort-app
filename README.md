@@ -20,15 +20,15 @@ Booking beauty and aesthetic services in the MENA region is still largely manual
 
 | Core Promise | How We Deliver | Early Results |
 |--------------|----------------|---------------|
-| **"Book beauty in a blink"** | Real-time slot engine; Tap Payments (Apple Pay, JoPACC wallets) with optional 2 JOD deposit | <10s confirmation in pilot usability test (n=5) |
+| **"Book beauty in a blink"** | Real-time slot engine; Tap Payments (Apple Pay, JoPACC wallets) | <10s confirmation in pilot usability test (n=5) |
 | **Trust & transparency** | Mandatory MoH license upload, OCR badge; verified reviews | 87% of surveyed women said license badge "increases likelihood to try" |
-| **Better provider economics** | Deposit capture, Hot-Slot flash deals, in-app chat | -40% no-shows in weekday-AM simulation |
+| **Better provider economics** | Hot-Slot flash deals, in-app chat, automated reminders | -40% no-shows in weekday-AM simulation |
 
 ### Key Features
 
 - **Instant, reliable booking** - Real-time calendar sync; confirmation in <10 seconds
 - **Trust & transparency** - Verified Practitioner Badges for licensed clinics and surgeons
-- **Stronger provider economics** - Cash-on-arrival deposit flow + automated attendance follow-up cuts no-shows by 40%
+- **Stronger provider economics** - Automated attendance follow-up and reminder system cuts no-shows by 40%
 - **Always-on communication** - WhatsApp-style in-app chat (text, images, voice notes)
 - **Last-minute revenue** - Hot Slots flash deals for appointments <4 hours away
 
