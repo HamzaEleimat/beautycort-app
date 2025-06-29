@@ -12,28 +12,28 @@
 The following domain-specific requirements need clarification for complete MVP specification:
 
 ### Business Rules & Constraints
-- [ ] **Maximum booking lead time** - How far in advance can customers book? (e.g., 30 days, 60 days)
-- [ ] **Minimum booking lead time** - What's the shortest notice for booking? (e.g., 2 hours, same-day)
-- [ ] **Currency rounding rules** - How should JOD amounts be rounded? (nearest 0.05, 0.1, etc.)
-- [ ] **Service duration constraints** - Min/max appointment durations, overlap policies
-- [ ] **Provider working hours** - Standard business hours, break times, holiday handling
-- [ ] **Cancellation windows** - Free cancellation periods, late cancellation fees
-- [ ] **Multi-service booking limits** - Max services per appointment, cross-provider bookings
-- [ ] **Age restrictions** - Minimum age for booking certain services (aesthetic treatments)
+- [x] **Maximum booking lead time** - No maximum limit for advance bookings
+- [x] **Minimum booking lead time** - 60 minutes shortest notice for bookings
+- [x] **Currency rounding rules** - JOD amounts rounded up to closest whole number
+- [x] **Service duration constraints** - Providers choose min/max appointment durations freely
+- [x] **Provider working hours** - Providers set during registration, editable via dashboard. Auto-blocked on national holidays (provider can override)
+- [x] **Cancellation windows** - Free cancellation up to 3 hours before appointment. Provider penalty: -0.1 rating per cancellation. Customer penalty: 1hr ban (1st), 24hr ban (2nd), indefinite ban (3rd+)
+- [x] **Multi-service booking limits** - Unlimited services per appointment within provider's available calendar slots
+- [x] **Age restrictions** - Minimum age 18+ for all services
 
 ### Technical Specifications  
-- [ ] **Offline functionality scope** - What features work without internet connection?
-- [ ] **Data retention policies** - How long to store booking history, chat messages, user data
-- [ ] **File upload limits** - Max size for profile photos, license documents, chat images
-- [ ] **Search result pagination** - Results per page, infinite scroll vs pagination
-- [ ] **Real-time sync frequency** - How often to refresh availability, booking status
-- [ ] **Language localization scope** - Arabic only, or Arabic + English support?
+- [x] **Offline functionality scope** - Customers can view upcoming bookings, providers can view calendar (no editing offline)
+- [x] **Data retention policies** - Industry standard retention: booking history permanent, chat messages 1 year, user data until account deletion
+- [x] **File upload limits** - Profile photos: 2MB, license documents: 10MB per file, chat/in-app images: 5MB per image
+- [x] **Search result pagination** - Infinite scroll implementation
+- [x] **Real-time sync frequency** - Available slots: 5-10 seconds while viewing timeslots, booking status: every 15 seconds
+- [x] **Language localization scope** - Arabic and English language support
 
 ### Integration Requirements
-- [ ] **Tap Payments fee structure** - Exact transaction fees, settlement terms
-- [ ] **MoH license verification API** - Available endpoints, response format, verification time
-- [ ] **SMS/Push notification costs** - Rate limits, delivery guarantees, fallback methods
-- [ ] **Map integration scope** - Google Maps, Apple Maps, or custom solution for location
+- [ ] **Tap Payments fee structure** - Exact transaction fees, settlement terms (TBD - Implementation phase)
+- [ ] **MoH license verification API** - Available endpoints, response format, verification time (TBD - Implementation phase)
+- [ ] **SMS/Push notification costs** - Rate limits, delivery guarantees, fallback methods (TBD - Implementation phase)
+- [ ] **Map integration scope** - Google Maps, Apple Maps, or custom solution for location (TBD - Implementation phase)
 
 ---
 

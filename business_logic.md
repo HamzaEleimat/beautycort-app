@@ -7,24 +7,30 @@
 
 ---
 
-## 🔍 Assumptions Made for Missing Domain Facts
+## 🔍 Business Rules & Technical Specifications
 
-The following reasonable assumptions were made to complete business logic mapping:
+The following business rules and technical specifications are now defined:
 
-### Business Rules Assumptions
-- **Maximum booking lead time:** 60 days in advance
-- **Minimum booking lead time:** 2 hours (except Hot Slots: 30 minutes)
-- **Currency rounding:** JOD amounts rounded to nearest 0.05
-- **Service buffer time:** 15 minutes between appointments
-- **Cancellation windows:** Free cancellation 24+ hours, fee after 24 hours
-- **Provider tier calculation:** Calendar month basis (1st to last day)
-- **No-show penalty:** 3 no-shows in 30 days = 24-hour booking restriction
+### Business Rules (Updated from Requirements)
+- **Maximum booking lead time:** No maximum limit for advance bookings
+- **Minimum booking lead time:** 60 minutes notice required
+- **Currency rounding:** JOD amounts rounded UP to closest whole number
+- **Service duration:** Providers choose min/max appointment durations freely
+- **Provider working hours:** Set during registration, editable via dashboard. Auto-blocked on national holidays (provider can override)
+- **Cancellation windows:** Free cancellation up to 3 hours before appointment
+- **Cancellation penalties:** 
+  - Providers: -0.1 rating per cancellation within 3 hours
+  - Customers: 1hr ban (1st offense), 24hr ban (2nd offense), indefinite ban (3rd+ offense)
+- **Multi-service booking:** Unlimited services per appointment within provider's available calendar slots
+- **Age restrictions:** Minimum age 18+ for all services
 
-### Technical Assumptions
-- **Search pagination:** 20 results per page
-- **File upload limits:** Profile photos 5MB, documents 10MB, chat images 5MB
-- **Session timeout:** 30 days with activity, 24 hours without
-- **Real-time sync:** Every 30 seconds for availability, instant for bookings
+### Technical Specifications (Updated from Requirements)
+- **Offline functionality:** Customers view upcoming bookings, providers view calendar (no editing offline)
+- **File upload limits:** Profile photos 2MB, license documents 10MB per file, chat/in-app images 5MB per image
+- **Search results:** Infinite scroll implementation
+- **Real-time sync frequency:** Available slots 5-10 seconds while viewing timeslots, booking status every 15 seconds
+- **Language support:** Arabic and English language support
+- **Data retention:** Booking history permanent, chat messages 1 year, user data until account deletion
 
 ---
 
@@ -305,34 +311,58 @@ const now = new Date();
 const appointmentTime = new Date(slot.dateTime);
 const hoursDifference = (appointmentTime - now) / (1000 * 60 * 60);
 
-// Standard booking rules
-if (hoursDifference < 2) {
-    throw new Error('Minimum 2-hour booking notice required');
+// Standard booking rules - Updated per requirements
+if (hoursDifference < 1) {
+    throw new Error('Minimum 60-minute booking notice required');
 }
-if (hoursDifference > (60 * 24)) { // 60 days
-    throw new Error('Maximum 60-day advance booking allowed');
-}
+// No maximum booking lead time limit
 
-// Hot Slots exception
+// Hot Slots exception (still applies for last-minute deals)
 if (slot.isHotSlot && hoursDifference >= 0.5) { // 30 minutes
-    // Allow Hot Slot booking
+    // Allow Hot Slot booking with shorter notice
     return true;
 }
 ```
 
 **Cancellation Logic (FR-MANAGE-002):**
 ```javascript
-function calculateCancellationFee(booking) {
+function processCancellation(booking, cancelledBy) {
     const now = new Date();
     const appointmentTime = new Date(booking.slot.dateTime);
     const hoursUntilAppointment = (appointmentTime - now) / (1000 * 60 * 60);
     
-    if (hoursUntilAppointment >= 24) {
-        return 0; // Free cancellation
-    } else if (hoursUntilAppointment >= 2) {
-        return booking.totalAmount * 0.25; // 25% fee
+    if (hoursUntilAppointment >= 3) {
+        // Free cancellation for both customers and providers
+        return { fee: 0, penalty: null };
     } else {
-        return booking.totalAmount * 0.50; // 50% fee
+        // Within 3-hour window - penalties apply
+        if (cancelledBy === 'PROVIDER') {
+            return {
+                fee: 0,
+                penalty: {
+                    type: 'RATING_DEDUCTION',
+                    amount: 0.1,
+                    reason: 'Late cancellation within 3 hours'
+                }
+            };
+        } else if (cancelledBy === 'CUSTOMER') {
+            const customerHistory = getCancellationHistory(booking.customerId, 30); // 30 days
+            const violationCount = customerHistory.filter(c => c.wasWithin3Hours).length;
+            
+            let banDuration;
+            if (violationCount === 0) banDuration = 1; // 1 hour
+            else if (violationCount === 1) banDuration = 24; // 24 hours  
+            else banDuration = -1; // Indefinite ban
+            
+            return {
+                fee: 0,
+                penalty: {
+                    type: 'BOOKING_BAN',
+                    duration: banDuration,
+                    reason: `Late cancellation violation #${violationCount + 1}`
+                }
+            };
+        }
     }
 }
 ```
@@ -397,9 +427,9 @@ function calculateCommission(booking) {
     const retentionRate = tierBenefits[providerTier].feeRetention;
     const providerRetention = beautyCortFee * retentionRate;
     
-    // Final amounts (rounded to nearest 0.05 JOD)
-    const netBeautyCortFee = roundToNearest(beautyCortFee - providerRetention, 0.05);
-    const providerPayout = roundToNearest(serviceAmount - netBeautyCortFee, 0.05);
+    // Final amounts (rounded UP to nearest whole JOD)
+    const netBeautyCortFee = roundUpToWhole(beautyCortFee - providerRetention);
+    const providerPayout = roundUpToWhole(serviceAmount - netBeautyCortFee);
     
     return {
         serviceAmount: serviceAmount,
@@ -410,8 +440,8 @@ function calculateCommission(booking) {
     };
 }
 
-function roundToNearest(amount, precision) {
-    return Math.round(amount / precision) * precision;
+function roundUpToWhole(amount) {
+    return Math.ceil(amount); // Always round UP to closest whole number
 }
 ```
 
@@ -452,16 +482,15 @@ Chat Message Processing:
 ```javascript
 const messageTypes = {
     TEXT: { maxLength: 1000, filterRequired: true },
-    IMAGE: { maxSize: 5 * 1024 * 1024, formats: ['jpg', 'png', 'gif'] },
+    IMAGE: { maxSize: 5 * 1024 * 1024, formats: ['jpg', 'png', 'gif'] }, // 5MB per requirements
     VOICE: { maxDuration: 60, format: 'mp3', maxSize: 2 * 1024 * 1024 },
     SYSTEM: { automated: true, noFilter: true }
 };
 
-// Message retention policy
+// Message retention policy - Updated per requirements
 const retentionRules = {
-    activeBooking: 'bookingComplete + 30 days',
-    completedBooking: 'bookingComplete + 30 days',
-    cancelledBooking: 'cancellation + 7 days'
+    allMessages: '1 year from creation', // Standard retention period
+    userDataDeletion: 'Delete when user account deleted'
 };
 ```
 
@@ -533,8 +562,8 @@ Calendar Operations:
 ```javascript
 function validateSlotCreation(providerId, startTime, endTime, serviceId) {
     const service = getService(serviceId);
-    const duration = service.duration; // in minutes
-    const bufferTime = 15; // minutes between appointments
+    const duration = service.duration; // in minutes - provider defined
+    const bufferTime = service.bufferTime || 0; // Provider-defined buffer time
     
     // Check for overlapping bookings
     const conflicts = checkBookingConflicts(providerId, startTime, endTime + bufferTime);
@@ -663,7 +692,7 @@ function calculateHotSlotDiscount(originalPrice) {
     const randomDiscount = baseDiscount + (Math.random() * (maxDiscount - baseDiscount));
     const discountedPrice = originalPrice * (1 - randomDiscount);
     
-    return roundToNearest(discountedPrice, 0.05);
+    return roundUpToWhole(discountedPrice); // Round UP to whole number
 }
 ```
 
@@ -715,7 +744,7 @@ class DataProtectionService {
 }
 ```
 
-### H.2 Healthcare Compliance
+### H.2 Healthcare Compliance & Age Verification
 **Referenced FR-IDs:** FR-HEALTH-001 to FR-HEALTH-005
 
 **License Monitoring System:**
@@ -742,6 +771,20 @@ async function checkLicenseExpiration() {
             await this.suspendProvider(provider.id, 'LICENSE_EXPIRED');
         }
     }
+}
+
+// Age verification for all services
+function validateCustomerAge(customerId, serviceId) {
+    const customer = getCustomer(customerId);
+    const birthDate = new Date(customer.dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    
+    if (age < 18) {
+        throw new ValidationError('Minimum age requirement: 18+ for all services');
+    }
+    
+    return true;
 }
 ```
 
