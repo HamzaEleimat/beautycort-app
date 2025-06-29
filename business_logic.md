@@ -114,7 +114,7 @@ Provider Verification State Machine:
 
 **Derived Rules:**
 1. **MoH License Upload (FR-PROV-001, FR-HEALTH-001):**
-   - Accepted formats: PDF, JPG, PNG (max 10MB)
+   - Accepted formats: PDF, JPG, PNG (max 10MB per file - updated requirement)
    - OCR extraction of license number, expiry date, provider name
    - Cross-verification with MoH database (simulated API call)
 
@@ -134,6 +134,8 @@ Provider Verification State Machine:
 - **Name mismatch:** Manual review required
 - **Duplicate license:** Block registration, show error
 - **OCR failure:** Fallback to manual review queue
+- **File size exceeded:** Reject files >10MB per updated limits
+- **Age verification required:** All providers must be 18+ for license validity
 
 ---
 
@@ -176,8 +178,8 @@ Search Flow with Filtering:
    - Custom: User input (max 50km)
    ```
 
-3. **Availability Integration (FR-FILTER-005):**
-   - "Today": Available slots remaining today after current time + 2 hours
+3. **Availability Integration (FR-FILTER-005) - Updated for 60min minimum:**
+   - "Today": Available slots remaining today after current time + 60 minutes
    - "Tomorrow": Any available slots for next calendar day
    - "This week": Any availability in next 7 days
 
@@ -894,20 +896,22 @@ class ErrorHandler {
 ## 📋 Implementation Priority Map
 
 ### Phase 1 (MVP Core): FR-IDs Priority
-1. **Authentication Flow:** FR-AUTH-001 to FR-AUTH-007 (Critical path)
-2. **Basic Booking:** FR-BOOK-001 to FR-BOOK-003 (Revenue generation)
-3. **Payment Processing:** FR-PAY-001 to FR-PAY-003 (Business critical)
-4. **Provider Verification:** FR-PROV-001 to FR-PROV-003 (Trust factor)
+1. **Authentication & Age Verification:** FR-AUTH-001 to FR-AUTH-007 + 18+ validation (Critical path)
+2. **Basic Booking with 60min Notice:** FR-BOOK-001 to FR-BOOK-003 (Revenue generation)
+3. **Payment Processing with JOD Rounding:** FR-PAY-001 to FR-PAY-003 (Business critical)
+4. **Provider Verification & Working Hours:** FR-PROV-001 to FR-PROV-003 (Trust factor)
 
 ### Phase 2 (User Experience): FR-IDs Priority  
-1. **Search & Filtering:** FR-SEARCH-001 to FR-FILTER-007 (Discovery)
-2. **Communication:** FR-CHAT-001 to FR-CHAT-004 (Engagement)
-3. **Booking Management:** FR-MANAGE-001 to FR-MANAGE-003 (Retention)
+1. **Search with Infinite Scroll:** FR-SEARCH-001 to FR-FILTER-007 (Discovery)
+2. **Communication with File Limits:** FR-CHAT-001 to FR-CHAT-004 (Engagement)
+3. **Booking Management with 3hr Cancellation:** FR-MANAGE-001 to FR-MANAGE-003 (Retention)
+4. **Offline Functionality:** Limited view-only access (User convenience)
 
 ### Phase 3 (Advanced Features): FR-IDs Priority
-1. **Analytics Dashboard:** FR-ANALYTICS-001 to FR-ANALYTICS-005 (Provider value)
-2. **Premium Features:** FR-SPOTLIGHT-001 to FR-HOTSLOT-005 (Monetization)
-3. **Compliance:** FR-SECURITY-001 to FR-HEALTH-005 (Legal requirements)
+1. **Analytics with Penalty Tracking:** FR-ANALYTICS-001 to FR-ANALYTICS-005 (Provider value)
+2. **Premium Features with Pricing:** FR-SPOTLIGHT-001 to FR-HOTSLOT-005 (Monetization)
+3. **Compliance with Data Retention:** FR-SECURITY-001 to FR-HEALTH-005 (Legal requirements)
+4. **Multi-language Support:** Arabic/English throughout platform (Accessibility)
 
 ---
 
