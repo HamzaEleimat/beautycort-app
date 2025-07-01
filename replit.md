@@ -7,15 +7,21 @@ BeautyCort is a mobile-first marketplace for booking beauty, spa, and aesthetic-
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: Flutter (mobile-first approach)
-- **Target Platforms**: iOS and Android with mobile-first design
+- **Framework**: Flutter 3.x (mobile-first cross-platform)
+- **Target Platforms**: iOS and Android with native performance
+- **State Management**: Provider/Riverpod pattern
+- **Local Storage**: SQLite for offline capabilities
+- **Real-time**: WebSocket integration for live updates
 - **UI/UX Focus**: Simple, intuitive booking flow optimized for quick interactions
 
 ### Backend Architecture
-- **Cloud Platform**: AWS
-- **Database**: Not yet specified (likely to use Drizzle ORM with potential Postgres integration)
-- **Authentication**: Multi-provider system supporting email/OTP and Google OAuth
-- **Real-time Features**: Real-time slot availability engine for instant booking confirmations
+- **Cloud Platform**: AWS with microservices architecture
+- **Primary Database**: PostgreSQL 15 with Redis caching
+- **Authentication**: AWS Cognito + Custom JWT with Google OAuth
+- **Real-time Features**: WebSocket + Redis for <10 second booking confirmations
+- **Services**: API Gateway, User Management, Booking Engine, Payment Service, Communication Service, Search Service
+- **File Storage**: AWS S3 for photos/documents/media
+- **Background Jobs**: AWS SQS + Lambda for async processing
 
 ### Key Integrations
 - **Payment Processing**: Tap Payments integration supporting Apple Pay and JoPACC wallets
@@ -97,3 +103,4 @@ Changelog:
 - June 29, 2025: Refined business logic document to align with all functional requirements updates including file size limits, offline functionality, infinite scroll, and penalty systems
 - June 29, 2025: Updated MoH license requirement to apply only to aesthetic clinics (not salons), added "ladies only" staff filter for cultural norms, modified fee structure to calculate per service rather than per booking
 - June 29, 2025: Updated fee structure to flat fees: 2 JOD per service <25 JOD, 5 JOD per service ≥25 JOD (applied per service independently)
+- July 1, 2025: Created comprehensive software architecture plan based on functional requirements and business logic documents, defining Flutter mobile + AWS cloud architecture with microservices, real-time booking engine, and detailed technical specifications
