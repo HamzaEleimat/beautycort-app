@@ -19,6 +19,281 @@ BeautyCort is architected as a **mobile-first, cloud-native marketplace** with r
 - **Resilient**: Graceful degradation and offline capabilities
 - **Localized**: Arabic/English bilingual support
 
+## 📊 System Architecture Diagrams
+
+### High-Level Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                           PRESENTATION LAYER                        │
+├─────────────────────────────┬───────────────────────────────────────┤
+│     Customer Mobile App     │        Provider Mobile App           │
+│        (Flutter)            │          (Flutter)                   │
+│  ┌─────────────────────┐   │   ┌─────────────────────┐             │
+│  │ Search & Discovery  │   │   │ Provider Dashboard  │             │
+│  │ Booking Engine      │   │   │ Calendar Management │             │
+│  │ Chat System         │   │   │ Analytics          │             │
+│  │ Payment Interface   │   │   │ Customer Management │             │
+│  └─────────────────────┘   │   └─────────────────────┘             │
+└─────────────────────────────┴───────────────────────────────────────┘
+                                  │
+                            ┌─────▼─────┐
+                            │   CDN     │
+                            │CloudFront │
+                            └─────┬─────┘
+                                  │
+┌─────────────────────────────────▼─────────────────────────────────────┐
+│                          API GATEWAY LAYER                            │
+│ ┌─────────────────────────────────────────────────────────────────┐   │
+│ │           AWS Application Load Balancer + API Gateway          │   │
+│ │        Rate Limiting │ Authentication │ Request Routing       │   │
+│ └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────┬───────────────────────────────────────┘
+                              │
+┌─────────────────────────────▼─────────────────────────────────────────┐
+│                        MICROSERVICES LAYER                            │
+│                                                                       │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+│ │    Auth     │ │    User     │ │  Provider   │ │   Booking   │      │
+│ │  Service    │ │ Management  │ │  Service    │ │   Engine    │      │
+│ │             │ │   Service   │ │             │ │             │      │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+│                                                                       │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+│ │  Payment    │ │    Chat/    │ │   Search    │ │ Analytics   │      │
+│ │  Service    │ │    Comm     │ │   Service   │ │   Service   │      │
+│ │             │ │   Service   │ │             │ │             │      │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+└─────────────────────────────┬───────────────────────────────────────┘
+                              │
+┌─────────────────────────────▼─────────────────────────────────────────┐
+│                          DATA LAYER                                   │
+│                                                                       │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+│ │ PostgreSQL  │ │    Redis    │ │ElasticSearch│ │    AWS S3   │      │
+│ │  (Primary   │ │  (Cache &   │ │  (Search &  │ │ (File Blob  │      │
+│ │  Database)  │ │  Sessions)  │ │  Analytics) │ │   Storage)  │      │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+│                                                                       │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐                      │
+│ │   AWS SQS   │ │   AWS SNS   │ │   Lambda    │                      │
+│ │ (Message    │ │(Notification│ │(Background  │                      │
+│ │  Queues)    │ │  Service)   │ │   Jobs)     │                      │
+│ └─────────────┘ └─────────────┘ └─────────────┘                      │
+└───────────────────────────────────────────────────────────────────────┘
+```
+
+### Service Communication Flow
+
+```
+┌─────────────┐    HTTP/REST    ┌─────────────┐    WebSocket    ┌─────────────┐
+│   Mobile    │◄──────────────►│ API Gateway │◄──────────────►│Real-time    │
+│    Apps     │                 │             │                 │  Updates    │
+└─────────────┘                 └─────┬───────┘                 └─────────────┘
+                                      │
+                              ┌───────▼───────┐
+                              │ Load Balancer │
+                              └───────┬───────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+            ┌───────▼───────┐ ┌───────▼───────┐ ┌───────▼───────┐
+            │  Auth Service │ │Booking Engine │ │Search Service │
+            └───────┬───────┘ └───────┬───────┘ └───────┬───────┘
+                    │                 │                 │
+                    └─────────────────┼─────────────────┘
+                                      │
+                              ┌───────▼───────┐
+                              │  Event Bus    │
+                              │   (SQS/SNS)   │
+                              └───────┬───────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+            ┌───────▼───────┐ ┌───────▼───────┐ ┌───────▼───────┐
+            │   Database    │ │     Cache     │ │   Storage     │
+            │ (PostgreSQL)  │ │   (Redis)     │ │   (AWS S3)    │
+            └───────────────┘ └───────────────┘ └───────────────┘
+```
+
+### Data Flow Architecture
+
+```
+Customer Journey Flow:
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Register/  │───▶│   Search    │───▶│    Book     │───▶│   Payment   │
+│    Login    │    │  Providers  │    │   Service   │    │ Processing  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │                   │
+       ▼                   ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│Auth Service │    │Search Engine│    │Booking DB   │    │Tap Payments │
+│+ User DB    │    │+Provider DB │    │+Availability│    │   Gateway   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+                                             │
+                                             ▼
+                                    ┌─────────────┐
+                                    │Confirmation │
+                                    │& Notifications│
+                                    └─────────────┘
+
+Provider Journey Flow:
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Register   │───▶│   Verify    │───▶│ Setup Shop  │───▶│   Manage    │
+│  Business   │    │ (OCR/MoH)   │    │ & Services  │    │  Bookings   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │                   │
+       ▼                   ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│Provider DB  │    │OCR Service  │    │Service DB   │    │Calendar DB  │
+│+Documents   │    │+Verification│    │+Pricing     │    │+Availability│
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+## 🛠️ Technology Stack Rationale
+
+### Frontend Technology Choices
+
+#### Flutter for Mobile Development
+**Selected**: Flutter 3.x with Dart
+**Alternatives Considered**: React Native, Native iOS/Android
+
+**Rationale**:
+- **Single Codebase**: 95% code sharing between iOS/Android reduces development time by 60%
+- **Performance**: Compiles to native ARM code, providing near-native performance
+- **Real-time Capabilities**: Excellent WebSocket support for live booking updates
+- **UI Consistency**: Pixel-perfect designs across platforms
+- **Arabic/RTL Support**: Built-in internationalization and RTL layout support
+- **Development Speed**: Hot reload and rich widget ecosystem accelerate development
+- **Team Efficiency**: Single skill set required instead of separate iOS/Android teams
+
+**Trade-offs**:
+- App size slightly larger than native (acceptable for feature-rich app)
+- Some platform-specific features require custom implementation
+- Learning curve for developers new to Dart
+
+### Backend Technology Choices
+
+#### Node.js for Microservices
+**Selected**: Node.js 18+ with Express.js
+**Alternatives Considered**: Python (Django/FastAPI), Java (Spring Boot), Go
+
+**Rationale**:
+- **Real-time Performance**: Event-driven architecture perfect for booking notifications
+- **JSON-Native**: Seamless data handling with NoSQL and REST APIs
+- **Ecosystem**: Rich npm ecosystem for rapid feature development
+- **Scalability**: Non-blocking I/O handles concurrent booking requests efficiently
+- **Development Velocity**: JavaScript across full stack reduces context switching
+- **WebSocket Support**: Native real-time communication capabilities
+
+#### PostgreSQL as Primary Database
+**Selected**: PostgreSQL 15
+**Alternatives Considered**: MongoDB, MySQL, Amazon DynamoDB
+
+**Rationale**:
+- **ACID Compliance**: Critical for financial transactions and booking integrity
+- **Geospatial Support**: PostGIS extension for location-based search
+- **JSON Support**: Flexible schema for service catalog and user preferences
+- **Complex Queries**: Advanced SQL for analytics and reporting requirements
+- **Consistency**: Strong consistency model essential for booking conflicts prevention
+- **Mature Ecosystem**: Robust tooling, monitoring, and optimization capabilities
+
+#### Redis for Caching & Real-time Data
+**Selected**: Redis 7
+**Alternatives Considered**: Memcached, Amazon ElastiCache
+
+**Rationale**:
+- **Sub-millisecond Performance**: Critical for real-time slot availability
+- **Data Structures**: Lists, sets, sorted sets perfect for booking queues
+- **Pub/Sub**: Built-in messaging for real-time notifications
+- **Session Storage**: Fast user session management
+- **Atomic Operations**: Prevents booking conflicts in high-concurrency scenarios
+- **Persistence Options**: Backup options for critical cache data
+
+#### ElasticSearch for Search Engine
+**Selected**: ElasticSearch 8
+**Alternatives Considered**: Amazon CloudSearch, Algolia, Solr
+
+**Rationale**:
+- **Geospatial Search**: Excellent location-based provider discovery
+- **Full-text Search**: Arabic and English text search with relevance scoring
+- **Real-time Indexing**: Immediate search result updates
+- **Aggregations**: Complex filtering by price, rating, availability
+- **Scalability**: Horizontal scaling for growing provider database
+- **Analytics**: Built-in analytics for search behavior insights
+
+### Cloud Infrastructure Choices
+
+#### AWS as Cloud Provider
+**Selected**: Amazon Web Services
+**Alternatives Considered**: Google Cloud Platform, Microsoft Azure
+
+**Rationale**:
+- **Regional Presence**: Middle East region (Bahrain) for optimal latency to Jordan
+- **Mature Services**: Comprehensive managed services reduce operational overhead
+- **Security Compliance**: SOC, PCI DSS compliance for payment processing
+- **Auto-scaling**: ECS and Lambda for handling booking traffic spikes
+- **Cost Optimization**: Reserved instances and spot pricing for cost control
+- **Integration Ecosystem**: Seamless integration with Tap Payments and other services
+
+#### ECS for Container Orchestration
+**Selected**: Amazon ECS with Fargate
+**Alternatives Considered**: Amazon EKS, Self-managed Docker
+
+**Rationale**:
+- **Managed Infrastructure**: AWS handles cluster management
+- **Simplified Scaling**: Auto-scaling based on CPU/memory metrics
+- **Cost Effective**: Pay only for actual resource usage with Fargate
+- **Security**: VPC isolation and IAM role integration
+- **Monitoring**: Native CloudWatch integration
+- **Deployment**: Blue/green deployments with zero downtime
+
+### Third-Party Service Choices
+
+#### Tap Payments for Payment Processing
+**Selected**: Tap Payments
+**Alternatives Considered**: PayPal, Stripe, local payment gateways
+
+**Rationale**:
+- **Regional Focus**: Specialized for MENA market and JOD currency
+- **Local Payment Methods**: JoPACC wallet integration essential for Jordan
+- **Apple Pay Support**: Critical for iOS user experience
+- **Compliance**: Local financial regulations compliance
+- **Settlement**: T+2 settlement aligns with business requirements
+- **Developer Experience**: Well-documented APIs and SDK support
+
+#### Firebase for Push Notifications
+**Selected**: Firebase Cloud Messaging
+**Alternatives Considered**: Amazon SNS, custom solution
+
+**Rationale**:
+- **Cross-platform**: Single solution for iOS and Android
+- **Reliability**: Google's infrastructure ensures delivery
+- **Free Tier**: Cost-effective for startup phase
+- **Rich Targeting**: User segmentation and A/B testing capabilities
+- **Analytics**: Built-in notification performance tracking
+- **Integration**: Seamless Flutter integration
+
+### Performance & Scalability Justification
+
+#### Microservices Architecture
+**Rationale**:
+- **Independent Scaling**: Scale booking engine separately from user management
+- **Team Autonomy**: Different teams can work on different services
+- **Technology Diversity**: Use best tool for each job (OCR service, payment service)
+- **Fault Isolation**: Service failures don't cascade across entire system
+- **Deployment Independence**: Deploy updates without affecting entire system
+
+#### Event-Driven Communication
+**Rationale**:
+- **Loose Coupling**: Services communicate without tight dependencies
+- **Scalability**: Handle booking spikes through message queues
+- **Reliability**: Message persistence ensures no lost booking confirmations
+- **Audit Trail**: Complete event history for compliance and debugging
+- **Real-time Updates**: Immediate propagation of booking status changes
+
+This technology stack provides the optimal balance of performance, scalability, development velocity, and cost-effectiveness for BeautyCort's requirements while maintaining the flexibility to evolve as the platform grows.
+
 ---
 
 ## 🎯 System Architecture Components
